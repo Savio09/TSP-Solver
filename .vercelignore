@@ -1,0 +1,47 @@
+# Python
+
+**pycache**/
+_.py[cod]
+_$py.class
+\*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+
+# IDEs
+
+.vscode/
+.idea/
+_.swp
+_.swo
+\*~
+
+# OS
+
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed for runtime)
+
+MODEL_EXPLANATION.md
+PRESENTATION_GUIDE.md
+TESTING.md
+PROJECT_SUMMARY.md
+FILES_OVERVIEW.md
+QUICK_START.md
+INTERACTIVE_README.md
+
+# Old Streamlit files (if any remain)
+
+app.py
+
+# Git
+
+.git/
+.gitignore
+
+# Logs
+
+\*.log

@@ -47,7 +47,7 @@ All locations use real geographic coordinates (latitude and longitude) and estim
 3. Run the Flask application:
 
    ```bash
-   python web_app.py
+   python index.py
    ```
 
 4. Open your browser and navigate to:
@@ -56,6 +56,12 @@ All locations use real geographic coordinates (latitude and longitude) and estim
    ```
 
 The application will start with an interactive map showing all 10 San Francisco locations.
+
+## Live Demo
+
+A live version of this application is deployed on Vercel. Visit the deployment to see the TSP solver in action without local setup.
+
+Note: Initial load may take a few seconds due to serverless cold start.
 
 ## Dependencies
 
@@ -85,7 +91,7 @@ The default solver is CBC (Coin-or Branch and Cut), which is included with cvxpy
 
 1. **Launch the application**
 
-   - Start the Flask server: `python web_app.py`
+   - Start the Flask server: `python index.py`
    - Open browser to http://localhost:5000
 
 2. **Select solution method**
@@ -177,7 +183,7 @@ The application provides a rich interactive map experience:
 ### Backend (Flask - Python)
 
 ```
-web_app.py
+index.py
 ├── Flask routes
 │   ├── GET /           - Serves main HTML page
 │   ├── GET /api/data   - Returns location and cost data
@@ -214,7 +220,7 @@ templates/index.html
 
 ### Modifying Locations
 
-To update location data, edit `web_app.py`:
+To update location data, edit `index.py`:
 
 ```python
 # Update location codes
@@ -235,7 +241,7 @@ COORDS = {
 
 ### Updating Travel Times
 
-Modify the `COST_MATRIX` in `web_app.py`. Ensure the matrix is symmetric and has large values (1,000,000) on the diagonal.
+Modify the `COST_MATRIX` in `index.py`. Ensure the matrix is symmetric and has large values (1,000,000) on the diagonal.
 
 ### Changing Map Appearance
 
@@ -324,10 +330,12 @@ This project demonstrates key concepts in optimization:
 
 ```
 tsp-solver/
-├── web_app.py              # Flask backend with TSP solvers
+├── index.py                # Flask backend with TSP solvers
 ├── templates/
 │   └── index.html          # Frontend UI with Leaflet.js map
 ├── requirements.txt        # Python dependencies
+├── vercel.json            # Vercel deployment configuration
+├── runtime.txt            # Python version for deployment
 ├── README.md              # This file
 └── CHANGELOG.md           # Version history and fixes
 ```
