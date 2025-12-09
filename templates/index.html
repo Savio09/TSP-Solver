@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive TSP Solver - San Francisco</title>
+
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      header {
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+        animation: fadeInDown 0.8s ease;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .main-content {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 20px;
+        animation: fadeIn 1s ease;
+      }
+
+      .control-panel {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        height: fit-content;
+      }
+
+      .control-section {
+        margin-bottom: 25px;
+      }
+
+      .control-section h3 {
+        color: #667eea;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .control-section h3::before {
+        content: "⚙️";
+      }
+
+      .radio-group,
+      .select-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .radio-option {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .radio-option:hover {
+        border-color: #667eea;
+        background: #f5f7ff;
+      }
+
+      .radio-option input[type="radio"] {
+        margin-right: 10px;
+        cursor: pointer;
+      }
+
+      .radio-option.selected {
+        border-color: #667eea;
+        background: #f5f7ff;
+      }
+
+      select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: border-color 0.3s ease;
+      }
+
+      select:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .solve-button {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      .solve-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+      }
+
+      .solve-button:active {
+        transform: translateY(0);
+      }
+
+      .solve-button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .results-section {
+        margin-top: 25px;
+        padding: 20px;
+        background: #f8f9ff;
+        border-radius: 10px;
+        display: none;
+      }
+
+      .results-section.visible {
+        display: block;
+        animation: slideIn 0.5s ease;
+      }
+
+      .result-item {
+        margin-bottom: 15px;
+      }
+
+      .result-label {
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 5px;
+      }
+
+      .result-value {
+        color: #333;
+        font-size: 1.1rem;
+      }
+
+      .tour-sequence {
+        font-family: "Courier New", monospace;
+        background: white;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+
+      .map-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        height: 700px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .map-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .map-header h2 {
+        color: #333;
+        font-size: 1.5rem;
+      }
+
+      .animation-controls {
+        display: none;
+        gap: 10px;
+      }
+
+      .animation-controls.visible {
+        display: flex;
+      }
+
+      .anim-button {
+        padding: 8px 15px;
+        border: 2px solid #667eea;
+        background: white;
+        color: #667eea;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .anim-button:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      .anim-button.active {
+        background: #667eea;
+        color: white;
+      }
+
+      #map {
+        flex: 1;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .iteration-info {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f8f9ff;
+        border-radius: 8px;
+        text-align: center;
+        display: none;
+      }
+
+      .iteration-info.visible {
+        display: block;
+      }
+
+      .iteration-info h4 {
+        color: #667eea;
+        margin-bottom: 8px;
+      }
+
+      .subtour-badge {
+        display: inline-block;
+        padding: 5px 10px;
+        background: #ff6b6b;
+        color: white;
+        border-radius: 5px;
+        margin: 5px;
+        font-size: 0.9rem;
+      }
+
+      .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .loading.visible {
+        display: flex;
+      }
+
+      .spinner {
+        width: 60px;
+        height: 60px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .pulse {
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      /* Custom marker styles */
+      .custom-marker {
+        background-color: #667eea;
+        border: 3px solid white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      }
+
+      .start-marker {
+        background-color: #51cf66;
+        width: 25px;
+        height: 25px;
+      }
+
+      @media (max-width: 1024px) {
+        .main-content {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🗺️ Interactive TSP Solver</h1>
+        <p>San Francisco Tour Optimization with Real-Time Animation</p>
+      </header>
+
+      <div class="main-content">
+        <!-- Control Panel -->
+        <div class="control-panel">
+          <div class="control-section">
+            <h3>Solution Method</h3>
+            <div class="radio-group">
+              <label class="radio-option selected" data-value="mtz">
+                <input type="radio" name="method" value="mtz" checked />
+                <div>
+                  <strong>MTZ Method</strong>
+                  <div style="font-size: 0.85rem; color: #666; margin-top: 3px">
+                    Miller-Tucker-Zemlin formulation
+                  </div>
+                </div>
+              </label>
+              <label class="radio-option" data-value="lazy">
+                <input type="radio" name="method" value="lazy" />
+                <div>
+                  <strong>Lazy Subtours</strong>
+                  <div style="font-size: 0.85rem; color: #666; margin-top: 3px">
+                    Iterative constraint generation
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="control-section">
+            <h3>MILP Solver</h3>
+            <select id="solver-select">
+              <option value="GLPK_MI">GLPK_MI</option>
+            </select>
+          </div>
+
+          <button class="solve-button" id="solve-btn">🚀 Solve TSP</button>
+
+          <div class="results-section" id="results">
+            <div class="result-item">
+              <div class="result-label">Method Used:</div>
+              <div class="result-value" id="method-used">-</div>
+            </div>
+            <div class="result-item">
+              <div class="result-label">Total Travel Time:</div>
+              <div class="result-value" id="travel-time">-</div>
+            </div>
+            <div class="result-item" id="iterations-item" style="display: none">
+              <div class="result-label">Iterations:</div>
+              <div class="result-value" id="iterations">-</div>
+            </div>
+            <div class="result-item">
+              <div class="result-label">Optimal Tour:</div>
+              <div class="tour-sequence" id="tour-sequence">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Map Container -->
+        <div class="map-container">
+          <div class="map-header">
+            <h2>San Francisco Tour Map</h2>
+            <div class="animation-controls" id="anim-controls">
+              <button class="anim-button" id="play-btn">▶️ Play</button>
+              <button class="anim-button" id="pause-btn">⏸️ Pause</button>
+              <button class="anim-button" id="reset-btn">🔄 Reset</button>
+              <span
+                id="step-info"
+                style="margin-left: 10px; color: #667eea; font-weight: bold"
+                >Step: 0/0</span
+              >
+            </div>
+          </div>
+          <div id="map"></div>
+          <div class="iteration-info" id="iteration-info">
+            <h4>Current Iteration: <span id="current-iteration">1</span></h4>
+            <div id="subtours-display"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+      let map;
+      let markers = {};
+      let locations = [];
+      let currentSolution = null;
+      let animationSteps = [];
+      let currentStep = 0;
+      let animationInterval = null;
+      let tourPolylines = [];
+
+      // Initialize map
+      function initMap() {
+        map = L.map("map").setView([37.7749, -122.4194], 13);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap contributors",
+        }).addTo(map);
+      }
+
+      // Load location data
+      async function loadData() {
+        try {
+          const response = await fetch("/api/data");
+          const data = await response.json();
+          locations = data.locations;
+          displayLocations();
+        } catch (error) {
+          console.error("Error loading data:", error);
+        }
+      }
+
+      // Display locations on map
+      function displayLocations() {
+        locations.forEach((loc) => {
+          const isStart = loc.code === "RH";
+          const marker = L.circleMarker([loc.lat, loc.lng], {
+            radius: isStart ? 12 : 8,
+            fillColor: isStart ? "#51cf66" : "#667eea",
+            color: "white",
+            weight: 3,
+            opacity: 1,
+            fillOpacity: 1,
+          }).addTo(map);
+
+          marker.bindPopup(`
+                    <strong>${loc.code}</strong><br>
+                    ${loc.name}
+                `);
+
+          // Add label
+          const label = L.marker([loc.lat, loc.lng], {
+            icon: L.divIcon({
+              className: "location-label",
+              html: `<div style="background: white; padding: 2px 6px; border-radius: 3px; 
+                                font-weight: bold; font-size: 11px; border: 1px solid #667eea; 
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.2);">${loc.code}</div>`,
+              iconSize: [40, 20],
+              iconAnchor: [20, -10],
+            }),
+          }).addTo(map);
+
+          markers[loc.id] = { marker, label, loc };
+        });
+      }
+
+      // Draw tour on map
+      function drawTour(edges, color = "black", weight = 4, animated = false) {
+        clearTour();
+
+        edges.forEach((edge, index) => {
+          const [from, to] = edge;
+          const fromLoc = locations[from];
+          const toLoc = locations[to];
+
+          setTimeout(
+            () => {
+              const polyline = L.polyline(
+                [
+                  [fromLoc.lat, fromLoc.lng],
+                  [toLoc.lat, toLoc.lng],
+                ],
+                {
+                  color: color,
+                  weight: weight,
+                  opacity: 0.7,
+                  dashArray: animated ? "10, 10" : null,
+                  className: animated ? "pulse" : "",
+                }
+              ).addTo(map);
+
+              tourPolylines.push(polyline);
+
+              // Add arrow
+              const arrowIcon = L.divIcon({
+                className: "arrow-icon",
+                html: `<div style="color: ${color}; font-size: 20px;">➤</div>`,
+                iconSize: [20, 20],
+              });
+
+              const midLat = (fromLoc.lat + toLoc.lat) / 2;
+              const midLng = (fromLoc.lng + toLoc.lng) / 2;
+              const arrow = L.marker([midLat, midLng], {
+                icon: arrowIcon,
+              }).addTo(map);
+              tourPolylines.push(arrow);
+            },
+            animated ? index * 300 : 0
+          );
+        });
+      }
+
+      // Clear tour from map
+      function clearTour() {
+        tourPolylines.forEach((item) => map.removeLayer(item));
+        tourPolylines = [];
+      }
+
+      // Handle solve button click
+      document
+        .getElementById("solve-btn")
+        .addEventListener("click", async () => {
+          const method = document.querySelector(
+            'input[name="method"]:checked'
+          ).value;
+          const solver = document.getElementById("solver-select").value;
+
+          document.getElementById("loading").classList.add("visible");
+          document.getElementById("solve-btn").disabled = true;
+
+          try {
+            const response = await fetch("/api/solve", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ method, solver }),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+              currentSolution = result;
+              animationSteps = result.animation_steps;
+              currentStep = 0;
+
+              displayResults(result);
+
+              if (method === "lazy" && animationSteps.length > 1) {
+                document
+                  .getElementById("anim-controls")
+                  .classList.add("visible");
+                document
+                  .getElementById("iteration-info")
+                  .classList.add("visible");
+                document.getElementById(
+                  "step-info"
+                ).textContent = `Step: 0/${animationSteps.length}`;
+              } else {
+                document
+                  .getElementById("anim-controls")
+                  .classList.remove("visible");
+                document
+                  .getElementById("iteration-info")
+                  .classList.remove("visible");
+                drawTour(result.edges, "red", 5, true);
+              }
+            } else {
+              alert("Error: " + result.error);
+            }
+          } catch (error) {
+            alert("Error solving TSP: " + error.message);
+          } finally {
+            document.getElementById("loading").classList.remove("visible");
+            document.getElementById("solve-btn").disabled = false;
+          }
+        });
+
+      // Display results
+      function displayResults(result) {
+        document.getElementById("results").classList.add("visible");
+        document.getElementById("method-used").textContent = result.method;
+        document.getElementById("travel-time").textContent =
+          result.optimal_value.toFixed(2) + " minutes";
+
+        const tourText = result.tour.map((i) => locations[i].code).join(" → ");
+        document.getElementById("tour-sequence").textContent = tourText;
+
+        if (result.method === "Lazy Subtours") {
+          document.getElementById("iterations-item").style.display = "block";
+          document.getElementById("iterations").textContent =
+            animationSteps.length;
+        } else {
+          document.getElementById("iterations-item").style.display = "none";
+        }
+      }
+
+      // Animation controls
+      document.getElementById("play-btn").addEventListener("click", () => {
+        if (!animationInterval) {
+          animationInterval = setInterval(() => {
+            if (currentStep < animationSteps.length) {
+              showStep(currentStep);
+              currentStep++;
+            } else {
+              clearInterval(animationInterval);
+              animationInterval = null;
+            }
+          }, 2000);
+        }
+      });
+
+      document.getElementById("pause-btn").addEventListener("click", () => {
+        if (animationInterval) {
+          clearInterval(animationInterval);
+          animationInterval = null;
+        }
+      });
+
+      document.getElementById("reset-btn").addEventListener("click", () => {
+        if (animationInterval) {
+          clearInterval(animationInterval);
+          animationInterval = null;
+        }
+        currentStep = 0;
+        clearTour();
+        document.getElementById(
+          "step-info"
+        ).textContent = `Step: 0/${animationSteps.length}`;
+        document.getElementById("current-iteration").textContent = "1";
+        document.getElementById("subtours-display").innerHTML = "";
+      });
+
+      // Show animation step
+      function showStep(stepIndex) {
+        const step = animationSteps[stepIndex];
+        clearTour();
+
+        document.getElementById("step-info").textContent = `Step: ${
+          stepIndex + 1
+        }/${animationSteps.length}`;
+        document.getElementById("current-iteration").textContent =
+          step.iteration;
+
+        // Draw edges with different colors for different components
+        const colors = ["#667eea", "#ff6b6b", "#51cf66", "#ffd43b", "#ff8787"];
+        step.components.forEach((comp, idx) => {
+          const compEdges = step.edges.filter(
+            (edge) => comp.includes(edge[0]) && comp.includes(edge[1])
+          );
+          const color = step.is_final ? "#51cf66" : colors[idx % colors.length];
+          drawTour(compEdges, color, step.is_final ? 5 : 3, false);
+        });
+
+        // Display subtours info
+        if (!step.is_final && step.components.length > 1) {
+          const subtourHTML = step.components
+            .map((comp, idx) => {
+              const compNames = comp.map((i) => locations[i].code).join(", ");
+              return `<span class="subtour-badge">Subtour ${
+                idx + 1
+              }: {${compNames}}</span>`;
+            })
+            .join("");
+          document.getElementById("subtours-display").innerHTML = subtourHTML;
+        } else if (step.is_final) {
+          document.getElementById("subtours-display").innerHTML =
+            '<span style="color: #51cf66; font-weight: bold;">✓ Single valid tour found!</span>';
+        }
+      }
+
+      // Radio button interactions
+      document.querySelectorAll(".radio-option").forEach((option) => {
+        option.addEventListener("click", () => {
+          document.querySelectorAll(".radio-option").forEach((opt) => {
+            opt.classList.remove("selected");
+          });
+          option.classList.add("selected");
+          option.querySelector("input").checked = true;
+        });
+      });
+
+      // Initialize on page load
+      window.addEventListener("load", () => {
+        initMap();
+        loadData();
+      });
+    </script>
+  </body>
+</html>
