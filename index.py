@@ -59,7 +59,7 @@ COORDS = {
 
 
 def solve_tsp_mtz(
-    C: np.ndarray, solver_name: str = "CBC"
+    C: np.ndarray, solver_name: str = "ECOS_BB"
 ) -> Tuple[float, np.ndarray, List[int]]:
     """Solve TSP using MTZ formulation"""
     n = C.shape[0]
@@ -87,8 +87,8 @@ def solve_tsp_mtz(
     objective = cp.Minimize(cp.sum(cp.multiply(C, X)))
     prob = cp.Problem(objective, constraints)
 
-    solver = getattr(cp, solver_name, cp.CBC)
-    prob.solve(solver=solver)
+    # Use ECOS_BB which is included with cvxpy by default for MILP
+    prob.solve(solver=cp.ECOS_BB)
 
     if prob.status not in ["optimal", "optimal_inaccurate"]:
         raise RuntimeError(f"Solver failed with status: {prob.status}")
@@ -106,7 +106,7 @@ def solve_tsp_mtz(
     return prob.value, X_val, tour
 
 
-def solve_tsp_lazy_animated(C: np.ndarray, solver_name: str = "CBC") -> Dict:
+def solve_tsp_lazy_animated(C: np.ndarray, solver_name: str = "ECOS_BB") -> Dict:
     """Solve TSP using lazy method, returning animation steps"""
     n = C.shape[0]
     X = cp.Variable((n, n), boolean=True)
@@ -120,14 +120,14 @@ def solve_tsp_lazy_animated(C: np.ndarray, solver_name: str = "CBC") -> Dict:
     subtour_cuts = []
     animation_steps = []
     iteration = 0
-    solver = getattr(cp, solver_name, cp.CBC)
 
     while True:
         iteration += 1
 
         objective = cp.Minimize(cp.sum(cp.multiply(C, X)))
         prob = cp.Problem(objective, constraints)
-        prob.solve(solver=solver)
+        # Use ECOS_BB which is included with cvxpy by default for MILP
+        prob.solve(solver=cp.ECOS_BB)
 
         if prob.status not in ["optimal", "optimal_inaccurate"]:
             raise RuntimeError(f"Solver failed with status: {prob.status}")
